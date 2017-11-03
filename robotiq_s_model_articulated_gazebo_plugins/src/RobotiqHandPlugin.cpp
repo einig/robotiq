@@ -16,10 +16,10 @@
 */
 /*
     This file has been modified from the original, by Devon Ash
-*/ 
+*/
 
-#include <robotiq_s_model_articulated_msgs/SModelRobotInput.h>
-#include <robotiq_s_model_articulated_msgs/SModelRobotOutput.h>
+#include <robotiq_s_model_control/SModel_robot_input.h>
+#include <robotiq_s_model_control/SModel_robot_output.h>
 #include <ros/ros.h>
 #include <string>
 #include <vector>
@@ -31,15 +31,17 @@ Due to necessity, I had to change the PID.hh file's definition from private memb
 I'm not sure exactly where the dependency chain includes PID.hh for the first time, so I've encapsulated all of the gazebo includes. Not pretty, but it works. If you're reading this and know of a better soln', feel free to change it.
 
 */
-#define private public 
+#define private public
 #include <gazebo/common/Plugin.hh>
 #include <gazebo/common/Time.hh>
 #include <gazebo/math/Angle.hh>
 #include <gazebo/physics/physics.hh>
 #include <robotiq_s_model_articulated_gazebo_plugins/RobotiqHandPlugin.h>
 #undef private
-
 // Default topic names initialization.
+const std::string RobotiqHandPlugin::DefaultTopicCommand = "SModelRobotOutput";
+const std::string RobotiqHandPlugin::DefaultTopicState   = "SModelRobotInput";
+
 const std::string RobotiqHandPlugin::DefaultLeftTopicCommand  =
   "/left_hand/command";
 const std::string RobotiqHandPlugin::DefaultLeftTopicState    =
@@ -84,22 +86,45 @@ void RobotiqHandPlugin::Load(gazebo::physics::ModelPtr _parent,
   this->world = this->model->GetWorld();
   this->sdf = _sdf;
 
-  if (!this->sdf->HasElement("side") ||
-      !this->sdf->GetElement("side")->GetValue()->Get(this->side) ||
-      ((this->side != "left") && (this->side != "right")))
+  //deprecate side element
+  if (this->sdf->HasElement("side"))
   {
-    gzerr << "Failed to determine which hand we're controlling; "
-             "aborting plugin load. <Side> should be either 'left' or 'right'."
+    gzlog << "Using deprecated '<side>'' tag. Replace by new '<prefix>' tag for better compatibility"
           << std::endl;
-    return;
+    if (!this->sdf->HasElement("side") ||
+        !this->sdf->GetElement("side")->GetValue()->Get(this->side) ||
+        ((this->side != "left") && (this->side != "right")))
+    {
+      gzerr << "Failed to determine which hand we're controlling; "
+              "aborting plugin load. <Side> should be either 'left' or 'right'."
+            << std::endl;
+    }
+    if (this->side == "left")
+      this->prefix = "l_";
+    else if (this->side == "right")
+      this->prefix = "r_";
   }
-
-  // Load the vector of all joints.
-  std::string prefix;
-  if (this->side == "left")
-    prefix = "l_";
+  //new prefix element
+  else if (this->sdf->HasElement("prefix"))
+  {
+    if (!this->sdf->GetElement("prefix")->GetValue()->Get(this->prefix))
+    {
+      gzerr << "Failed to load '<prefix>' element."
+            << std::endl;
+      return;
+    }
+    else
+    {
+      gzlog << "Using '<prefix>' element."
+            << std::endl;
+      //this->prefix = this->prefix;
+    }
+  }
   else
-    prefix = "r_";
+  {
+    gzlog << "Running RobotiqHandPlugin without prefix. This will lead to problems with multiple hands."
+          << std::endl;
+  }
 
   // Load the vector of all joints.
   if (!this->FindJoints())
@@ -121,13 +146,18 @@ void RobotiqHandPlugin::Load(gazebo::physics::ModelPtr _parent,
   }
   gzlog << "Initialized the joint state vector" << std::endl;
 
-  // Default ROS topic names.
-  std::string controlTopicName = this->DefaultLeftTopicCommand;
-  std::string stateTopicName   = this->DefaultLeftTopicState;
-  if (this->side == "right")
-  {
-    controlTopicName = this->DefaultRightTopicCommand;
-    stateTopicName   = this->DefaultRightTopicState;
+  std::string controlTopicName = this->DefaultTopicCommand;
+  std::string stateTopicName   = this->DefaultTopicState;
+  //deprecated side element
+  if (this->sdf->HasElement("side")) {
+    // Default ROS topic names.
+    controlTopicName = this->DefaultLeftTopicCommand;
+    stateTopicName   = this->DefaultLeftTopicState;
+    if (this->side == "right")
+    {
+      controlTopicName = this->DefaultRightTopicCommand;
+      stateTopicName   = this->DefaultRightTopicState;
+    }
   }
   gzlog << "Using control topic " << controlTopicName << std::endl;
 
@@ -181,22 +211,29 @@ void RobotiqHandPlugin::Load(gazebo::physics::ModelPtr _parent,
   this->pmq.startServiceThread();
 
   // Broadcasts state.
-  this->pubHandleStateQueue = this->pmq.addPub<robotiq_s_model_articulated_msgs::SModelRobotInput>();
-  this->pubHandleState = this->rosNode->advertise<robotiq_s_model_articulated_msgs::SModelRobotInput>(
+  this->pubHandleStateQueue = this->pmq.addPub<robotiq_s_model_control::SModel_robot_input>();
+  this->pubHandleState = this->rosNode->advertise<robotiq_s_model_control::SModel_robot_input>(
     stateTopicName, 100, true);
 
   // Broadcast joint state.
   std::string topicBase = std::string("robotiq_hands/") + this->side;
   this->pubJointStatesQueue = this->pmq.addPub<sensor_msgs::JointState>();
-  this->pubJointStates = this->rosNode->advertise<sensor_msgs::JointState>(
-    topicBase + std::string("_hand/joint_states"), 10);
+  //this->pubJointStates = this->rosNode->advertise<sensor_msgs::JointState>(
+  //  topicBase + std::string("_hand/joint_states"), 10);
+  this->pubJointStates = this->rosNode->advertise<sensor_msgs::JointState>(std::string("/joint_states"), 10);
 
   // Subscribe to user published handle control commands.
-  ros::SubscribeOptions handleCommandSo =
+  /*ros::SubscribeOptions handleCommandSo =
     ros::SubscribeOptions::create<robotiq_s_model_articulated_msgs::SModelRobotOutput>(
       controlTopicName, 100,
       boost::bind(&RobotiqHandPlugin::SetHandleCommand, this, _1),
+      ros::VoidPtr(), &this->rosQueue);*/
+  ros::SubscribeOptions handleCommandSo =
+    ros::SubscribeOptions::create<robotiq_s_model_control::SModel_robot_output>(
+      controlTopicName, 100,
+      boost::bind(&RobotiqHandPlugin::SetHandleCommand, this, _1),
       ros::VoidPtr(), &this->rosQueue);
+
 
   // Enable TCP_NODELAY since TCP causes bursty communication with high jitter.
   handleCommandSo.transport_hints =
@@ -251,12 +288,13 @@ bool RobotiqHandPlugin::VerifyField(const std::string &_label, int _min,
 
 ////////////////////////////////////////////////////////////////////////////////
 bool RobotiqHandPlugin::VerifyCommand(
-    const robotiq_s_model_articulated_msgs::SModelRobotOutput::ConstPtr &_command)
+    const robotiq_s_model_control::SModel_robot_output::ConstPtr &_command)
 {
   return this->VerifyField("rACT", 0, 1,   _command->rACT) &&
          this->VerifyField("rMOD", 0, 3,   _command->rACT) &&
          this->VerifyField("rGTO", 0, 1,   _command->rACT) &&
          this->VerifyField("rATR", 0, 1,   _command->rACT) &&
+         this->VerifyField("rGLV", 0, 1,   _command->rACT) &&
          this->VerifyField("rICF", 0, 1,   _command->rACT) &&
          this->VerifyField("rICS", 0, 1,   _command->rACT) &&
          this->VerifyField("rPRA", 0, 255, _command->rACT) &&
@@ -265,7 +303,7 @@ bool RobotiqHandPlugin::VerifyCommand(
          this->VerifyField("rPRB", 0, 255, _command->rACT) &&
          this->VerifyField("rSPB", 0, 255, _command->rACT) &&
          this->VerifyField("rFRB", 0, 255, _command->rACT) &&
-         this->VerifyField("rPRC", 0, 255, _command->rACT) && 
+         this->VerifyField("rPRC", 0, 255, _command->rACT) &&
          this->VerifyField("rSPC", 0, 255, _command->rACT) &&
          this->VerifyField("rFRC", 0, 255, _command->rACT) &&
          this->VerifyField("rPRS", 0, 255, _command->rACT) &&
@@ -275,7 +313,7 @@ bool RobotiqHandPlugin::VerifyCommand(
 
 ////////////////////////////////////////////////////////////////////////////////
 void RobotiqHandPlugin::SetHandleCommand(
-    const robotiq_s_model_articulated_msgs::SModelRobotOutput::ConstPtr &_msg)
+    const robotiq_s_model_control::SModel_robot_output::ConstPtr &_msg)
 {
   boost::mutex::scoped_lock lock(this->controlMutex);
 
@@ -355,6 +393,7 @@ void RobotiqHandPlugin::UpdateStates()
     // Emergency auto-release.
     else if (this->handleCommand.rATR == 1)
     {
+      ROS_ERROR("bla");
       this->handState = Emergency;
     }
     // Individual Control of Scissor.
@@ -522,6 +561,7 @@ uint8_t RobotiqHandPlugin::GetCurrentPosition(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+//DEBUG: THIS IS WHERE THE OUTPUT MOTION COMES FROM!!!
 void RobotiqHandPlugin::GetAndPublishHandleState()
 {
   // gACT. Initialization status.
@@ -643,6 +683,12 @@ void RobotiqHandPlugin::GetAndPublishJointState(
                                            const gazebo::common::Time &_curTime)
 {
   this->jointStates.header.stamp = ros::Time(_curTime.sec, _curTime.nsec);
+  // DEBUG joint states
+  /*for (size_t i = 0; i < this->joints.size(); ++i)
+  {
+    gzerr << "Joint states: " << this->joints[i]->GetChild() << std::endl;
+  }*/
+  // DEBUG joint states
   for (size_t i = 0; i < this->joints.size(); ++i)
   {
     this->jointStates.position[i] = this->joints[i]->GetAngle(0).Radian();
@@ -666,6 +712,7 @@ void RobotiqHandPlugin::UpdatePIDControl(double _dt)
 
   for (int i = 0; i < this->NumJoints; ++i)
   {
+    // default case for basic mode
     double targetPose = 0.0;
     double targetSpeed = (this->MinVelocity + this->MaxVelocity) / 2.0;
 
@@ -710,6 +757,7 @@ void RobotiqHandPlugin::UpdatePIDControl(double _dt)
             (this->joints[i]->GetUpperLimit(0).Radian() -
              this->joints[i]->GetLowerLimit(0).Radian()) * (215.0 / 255.0)
             * this->handleCommand.rPRA / 255.0;
+            //gzerr << "scissor mode " << targetPose << std::endl;
           break;
       }
     }
@@ -774,100 +822,101 @@ bool RobotiqHandPlugin::FindJoints()
 {
   // Load up the joints we expect to use, finger by finger.
   gazebo::physics::JointPtr joint;
-  std::string prefix;
   std::string suffix;
-  if (this->side == "left")
+  /*if (this->side == "left")
     prefix = "l_";
-  else
+  else if (this->side == "right")
     prefix = "r_";
+  else
+    prefix = this->side;*/
 
   // palm_finger_1_joint (actuated).
   suffix = "palm_finger_1_joint";
-  if (!this->GetAndPushBackJoint(prefix + suffix, this->joints))
+  if (!this->GetAndPushBackJoint(this->prefix + suffix, this->joints))
     return false;
-  if (!this->GetAndPushBackJoint(prefix + suffix, this->fingerJoints))
+  if (!this->GetAndPushBackJoint(this->prefix + suffix, this->fingerJoints))
     return false;
-  this->jointNames.push_back(prefix + suffix);
+  this->jointNames.push_back(this->prefix + suffix);
 
   // palm_finger_2_joint (actuated).
   suffix = "palm_finger_2_joint";
-  if (!this->GetAndPushBackJoint(prefix + suffix, this->joints))
+  if (!this->GetAndPushBackJoint(this->prefix + suffix, this->joints))
     return false;
-  if (!this->GetAndPushBackJoint(prefix + suffix, this->fingerJoints))
+  if (!this->GetAndPushBackJoint(this->prefix + suffix, this->fingerJoints))
     return false;
-  this->jointNames.push_back(prefix + suffix);
+  this->jointNames.push_back(this->prefix + suffix);
 
   // We read the joint state from finger_1_joint_1
   // but we actuate finger_1_joint_proximal_actuating_hinge (actuated).
   suffix = "finger_1_joint_proximal_actuating_hinge";
-  if (!this->GetAndPushBackJoint(prefix + suffix, this->fingerJoints))
+  if (!this->GetAndPushBackJoint(this->prefix + suffix, this->fingerJoints))
     return false;
   suffix = "finger_1_joint_1";
-  if (!this->GetAndPushBackJoint(prefix + suffix, this->joints))
+  if (!this->GetAndPushBackJoint(this->prefix + suffix, this->joints))
     return false;
-  this->jointNames.push_back(prefix + suffix);
+  this->jointNames.push_back(this->prefix + suffix);
 
   // We read the joint state from finger_2_joint_1
   // but we actuate finger_2_proximal_actuating_hinge (actuated).
   suffix = "finger_2_joint_proximal_actuating_hinge";
-  if (!this->GetAndPushBackJoint(prefix + suffix, this->fingerJoints))
+  if (!this->GetAndPushBackJoint(this->prefix + suffix, this->fingerJoints))
     return false;
   suffix = "finger_2_joint_1";
-  if (!this->GetAndPushBackJoint(prefix + suffix, this->joints))
+  if (!this->GetAndPushBackJoint(this->prefix + suffix, this->joints))
     return false;
-  this->jointNames.push_back(prefix + suffix);
+  this->jointNames.push_back(this->prefix + suffix);
 
   // We read the joint state from finger_middle_joint_1
   // but we actuate finger_middle_proximal_actuating_hinge (actuated).
   suffix = "finger_middle_joint_proximal_actuating_hinge";
-  if (!this->GetAndPushBackJoint(prefix + suffix, this->fingerJoints))
+  if (!this->GetAndPushBackJoint(this->prefix + suffix, this->fingerJoints))
     return false;
   suffix = "finger_middle_joint_1";
-  if (!this->GetAndPushBackJoint(prefix + suffix, this->joints))
+  if (!this->GetAndPushBackJoint(this->prefix + suffix, this->joints))
     return false;
-  this->jointNames.push_back(prefix + suffix);
+  this->jointNames.push_back(this->prefix + suffix);
 
   // finger_1_joint_2 (underactuated).
   suffix = "finger_1_joint_2";
-  if (!this->GetAndPushBackJoint(prefix + suffix, this->joints))
+  if (!this->GetAndPushBackJoint(this->prefix + suffix, this->joints))
     return false;
-  this->jointNames.push_back(prefix + suffix);
+  this->jointNames.push_back(this->prefix + suffix);
 
   // finger_1_joint_3 (underactuated).
   suffix = "finger_1_joint_3";
-  if (!this->GetAndPushBackJoint(prefix + suffix, this->joints))
+  if (!this->GetAndPushBackJoint(this->prefix + suffix, this->joints))
     return false;
-  this->jointNames.push_back(prefix + suffix);
+  this->jointNames.push_back(this->prefix + suffix);
 
   // finger_2_joint_2 (underactuated).
   suffix = "finger_2_joint_2";
-  if (!this->GetAndPushBackJoint(prefix + suffix, this->joints))
+  if (!this->GetAndPushBackJoint(this->prefix + suffix, this->joints))
     return false;
-  this->jointNames.push_back(prefix + suffix);
+  this->jointNames.push_back(this->prefix + suffix);
 
   // finger_2_joint_3 (underactuated).
   suffix = "finger_2_joint_3";
-  if (!this->GetAndPushBackJoint(prefix + suffix, this->joints))
+  if (!this->GetAndPushBackJoint(this->prefix + suffix, this->joints))
     return false;
-  this->jointNames.push_back(prefix + suffix);
+  this->jointNames.push_back(this->prefix + suffix);
 
   // palm_finger_middle_joint (underactuated).
   suffix = "palm_finger_middle_joint";
-  if (!this->GetAndPushBackJoint(prefix + suffix, this->joints))
+  if (!this->GetAndPushBackJoint(this->prefix + suffix, this->joints))
     return false;
-  this->jointNames.push_back(prefix + suffix);
+  this->jointNames.push_back(this->prefix + suffix);
 
   // finger_middle_joint_2 (underactuated).
   suffix = "finger_middle_joint_2";
-  if (!this->GetAndPushBackJoint(prefix + suffix, this->joints))
+  if (!this->GetAndPushBackJoint(this->prefix + suffix, this->joints))
     return false;
-  this->jointNames.push_back(prefix + suffix);
+  this->jointNames.push_back(this->prefix + suffix);
 
   // finger_middle_joint_3 (underactuated).
   suffix = "finger_middle_joint_3";
-  if (!this->GetAndPushBackJoint(prefix + suffix, this->joints))
+  if (!this->GetAndPushBackJoint(this->prefix + suffix, this->joints))
     return false;
-  this->jointNames.push_back(prefix + suffix);
+  this->jointNames.push_back(this->prefix + suffix);
 
   gzlog << "RobotiqHandPlugin found all joints for " << this->side
         << " hand." << std::endl;
