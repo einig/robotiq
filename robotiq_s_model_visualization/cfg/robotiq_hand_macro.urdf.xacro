@@ -14,16 +14,16 @@ there are multiple hands then a prefix followed by an "_" is needed.
     <!-- Link 0 -->
     <link name="${prefix}link_0">
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0.020 0 0" rpy="0 0 0"/>
         <geometry>
           <mesh filename="package://robotiq_s_model_visualization/meshes/s-model_articulated/visual/link_0.STL" />
         </geometry>
-        <material name="green">
-          <color rgba="0 1 0 1"/>
+        <material name="gray">
+          <color rgba="0.2 0.2 0.2 1"/>
         </material>
       </visual>
       <collision>
-        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <origin xyz="0.020 0 0" rpy="0 0 0"/>
         <geometry>
           <mesh filename="package://robotiq_s_model_visualization/meshes/s-model_articulated/collision/link_0.STL" />
         </geometry>
@@ -46,20 +46,18 @@ there are multiple hands then a prefix followed by an "_" is needed.
     <!-- Link 1 -->
     <link name="${prefix}link_1">
       <visual>
-        <origin rpy="0 0 ${3.1416/2}" xyz="0 0.05717 0"/>
+        <origin xyz="0.050 -.028 0" rpy="0 0 -0.52"/>
         <geometry>
           <mesh filename="package://robotiq_s_model_visualization/meshes/s-model_articulated/visual/link_1.STL" />
         </geometry>
-        <material name="green"/>
+        <material name="gray"/>
       </visual>
       <collision>
-        <origin rpy="0 0 ${3.1416/2}" xyz="0 0.05717 0"/>
+        <origin xyz="0.050 -.028 0" rpy="0 0 -0.52"/>
         <geometry>
-          <mesh filename="package://robotiq_s_model_visualization/meshes/s-model_articulated/collision/link_1.STL"/>
+          <mesh filename="package://robotiq_s_model_visualization/meshes/s-model_articulated/collision/link_1.STL" />
         </geometry>
-        <material name="yellow">
-          <color rgba="0 1 1 1"/>
-        </material>
+        <material name="yellow"/>
       </collision>
       <inertial>
         <origin rpy="0 0 ${3.1416/2}" xyz="0.00053 0.03218 0"/>
@@ -80,18 +78,23 @@ there are multiple hands then a prefix followed by an "_" is needed.
 
     <!-- Link 2 -->
     <link name="${prefix}link_2">
+      <!--
+      NOTE: This link has an offset in the z-direction based on the models that were
+      used to generate grap-it poses.  With the offset below the model appears visually
+      correct, but it is suspect.
+      -->
       <visual>
-        <origin rpy="0 0 ${3.1416/2}" xyz="0 0.03810 0.0075"/>
+        <origin xyz="0.039 0 0.0075" rpy="0 0 0"/>
         <geometry>
           <mesh filename="package://robotiq_s_model_visualization/meshes/s-model_articulated/visual/link_2.STL" />
         </geometry>
-        <material name="green"/>
+        <material name="gray"/>
       </visual>
       <collision>
-        <origin rpy="0 0 ${3.1416/2}" xyz="0 0.03810 0.0075"/>
-          <geometry>
-            <mesh filename="package://robotiq_s_model_visualization/meshes/s-model_articulated/collision/link_2.STL"/>
-          </geometry>
+        <origin xyz="0.039 0 0.0075" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://robotiq_s_model_visualization/meshes/s-model_articulated/collision/link_2.STL" />
+        </geometry>
         <material name="yellow"/>
       </collision>
       <inertial>
@@ -114,16 +117,16 @@ there are multiple hands then a prefix followed by an "_" is needed.
     <!-- Link 3 -->
     <link name="${prefix}link_3">
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 0 0" rpy="0 0 0.52"/>
         <geometry>
           <mesh filename="package://robotiq_s_model_visualization/meshes/s-model_articulated/visual/link_3.STL" />
         </geometry>
-        <material name="green"/>
+        <material name="gray"/>
       </visual>
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 0 0" rpy="0 0 0.52"/>
         <geometry>
-          <mesh filename="package://robotiq_s_model_visualization/meshes/s-model_articulated/collision/link_3.STL"/>
+          <mesh filename="package://robotiq_s_model_visualization/meshes/s-model_articulated/collision/link_3.STL" />
         </geometry>
         <material name="yellow"/>
       </collision>
@@ -173,6 +176,7 @@ there are multiple hands then a prefix followed by an "_" is needed.
     <gazebo reference="${prefix}link_proximal_actuating_hinge">
       <mu1>1.1</mu1>
       <mu2>1.1</mu2>
+      <material>Gazebo/Red</material>
     </gazebo>
 
     <!-- Link paraproximal actuating hinge -->
@@ -205,6 +209,7 @@ there are multiple hands then a prefix followed by an "_" is needed.
     <gazebo reference="${prefix}link_paraproximal_actuating_hinge">
       <mu1>1.1</mu1>
       <mu2>1.1</mu2>
+      <material>Gazebo/Red</material>
     </gazebo>
 
     <!-- Link proximal actuating bar -->
@@ -236,6 +241,7 @@ there are multiple hands then a prefix followed by an "_" is needed.
     <gazebo reference="${prefix}link_proximal_actuating_bar">
       <mu1>1.1</mu1>
       <mu2>1.1</mu2>
+      <material>Gazebo/Red</material>
     </gazebo>
 
     <!-- Link paraproximal bar -->
@@ -267,6 +273,7 @@ there are multiple hands then a prefix followed by an "_" is needed.
     <gazebo reference="${prefix}link_paraproximal_bar">
       <mu1>1.1</mu1>
       <mu2>1.1</mu2>
+      <material>Gazebo/Red</material>
     </gazebo>
 
     <!-- Link median actuating hinge -->
@@ -298,6 +305,7 @@ there are multiple hands then a prefix followed by an "_" is needed.
     <gazebo reference="${prefix}link_median_actuating_hinge">
       <mu1>1.1</mu1>
       <mu2>1.1</mu2>
+      <material>Gazebo/Red</material>
     </gazebo>
 
     <!-- Link median bar -->
@@ -329,6 +337,7 @@ there are multiple hands then a prefix followed by an "_" is needed.
     <gazebo reference="${prefix}link_median_bar">
       <mu1>1.1</mu1>
       <mu2>1.1</mu2>
+      <material>Gazebo/Red</material>
     </gazebo>
 
     <!-- Link paramedian hinge -->
@@ -360,6 +369,7 @@ there are multiple hands then a prefix followed by an "_" is needed.
     <gazebo reference="${prefix}link_paramedian_hinge">
       <mu1>1.1</mu1>
       <mu2>1.1</mu2>
+      <material>Gazebo/Red</material>
     </gazebo>
 
     <!-- Link median bar underactuated -->
@@ -391,6 +401,7 @@ there are multiple hands then a prefix followed by an "_" is needed.
     <gazebo reference="${prefix}link_median_bar_underactuated">
       <mu1>1.1</mu1>
       <mu2>1.1</mu2>
+      <material>Gazebo/Red</material>
     </gazebo>
 
     <!-- Link paradistal hinge -->
@@ -422,6 +433,7 @@ there are multiple hands then a prefix followed by an "_" is needed.
     <gazebo reference="${prefix}link_paradistal_hinge">
       <mu1>1.1</mu1>
       <mu2>1.1</mu2>
+      <material>Gazebo/Red</material>
     </gazebo>
     <!-- End of link list -->
 
@@ -432,8 +444,8 @@ there are multiple hands then a prefix followed by an "_" is needed.
       <parent link="${prefix}link_0"/>
       <child link="${prefix}link_proximal_actuating_hinge"/>
       <axis xyz="0 0 1"/>
-      <origin rpy="0 0 -2.0906" xyz="0 0 0.01"/>
-      <limit effort="100" lower="-3.1416" upper="3.1416" velocity="100"/>
+      <origin rpy="0 0 -2.0906" xyz="0.02 0 0.01"/>
+      <limit effort="0.6100" lower="-3.1416" upper="3.1416" velocity="0.0100"/>
     </joint>
 
     <gazebo reference="${prefix}joint_proximal_actuating_hinge">
@@ -445,7 +457,7 @@ there are multiple hands then a prefix followed by an "_" is needed.
       <parent link="${prefix}link_0"/>
       <child link="${prefix}link_paraproximal_actuating_hinge"/>
       <axis xyz="0 0 1"/>
-      <origin rpy="0 0 -2.0906" xyz="0 0 -0.01"/>
+      <origin rpy="0 0 -2.0906" xyz="0.02 0 -0.01"/>
       <limit effort="100" lower="-3.1416" upper="3.1416" velocity="100"/>
     </joint>
 
@@ -484,7 +496,7 @@ there are multiple hands then a prefix followed by an "_" is needed.
       <parent link="${prefix}link_1"/>
       <child link="${prefix}link_median_actuating_hinge"/>
       <axis xyz="0 0 1"/>
-      <origin rpy="0 0 ${-0.37}" xyz="0 0.05715 0.01"/>
+      <origin rpy="0 0 ${-0.37-2.0906}" xyz="0.05 -0.028 0.01"/>
       <limit effort="100" lower="-3.1416" upper="3.1416" velocity="100"/>
     </joint>
 
@@ -498,7 +510,7 @@ there are multiple hands then a prefix followed by an "_" is needed.
       <child link="${prefix}link_paramedian_hinge"/>
       <axis xyz="0 0 1"/>
       <!-- -0.37 is hand picked, 0.9719 is hand calculated from atan(0.02381/0.01625) -->
-      <origin rpy="0 0 0" xyz="0 0.05715 -0.01"/>
+      <origin rpy="0 0 -2.0906" xyz="0.05 -0.028 -0.01"/>
       <limit effort="100" lower="-3.1416" upper="3.1416" velocity="100"/>
     </joint>
 
@@ -525,7 +537,7 @@ there are multiple hands then a prefix followed by an "_" is needed.
       <parent link="${prefix}link_2"/>
       <child link="${prefix}link_paradistal_hinge"/>
       <axis xyz="0 0 1"/>
-      <origin rpy="0 0 0" xyz="0 0.039 -0.01"/>
+      <origin rpy="0 0 0" xyz="0.039 0 -0.01"/>
       <limit effort="100" lower="-3.1416" upper="3.1416" velocity="100"/>
     </joint>
 
@@ -549,7 +561,7 @@ there are multiple hands then a prefix followed by an "_" is needed.
 
     <!-- Joint 1 -->
     <joint name="${prefix}joint_1" type="revolute">
-      <origin rpy="0 0 -2.0906" xyz="0 0 0"/>
+      <origin xyz="0.020 0 0" rpy="0 0 0"/>
       <axis xyz="0 0 1" />
       <parent link="${prefix}link_0"/>
       <child link="${prefix}link_1"/>
@@ -568,7 +580,7 @@ there are multiple hands then a prefix followed by an "_" is needed.
       <child link="${prefix}link_2"/>
       <dynamics damping="1" friction="0" />
       <axis xyz="0 0 1"/>
-      <origin rpy="0 0 0" xyz="0 0.05715 0"/>
+      <origin xyz="0.050 -.028 0" rpy="0 0 -0.52"/>
       <!-- Limits: [0deg.,90deg.] -->
       <limit lower="0" upper="1.5708" effort="60" velocity="-1"/>
     </joint>
@@ -583,7 +595,7 @@ there are multiple hands then a prefix followed by an "_" is needed.
       <child link="${prefix}link_3"/>
       <dynamics damping="1" friction="0" />
       <axis xyz="0 0 1"/>
-      <origin rpy="0 0 ${3.1416/2 + 0.5198}" xyz="0 0.039 0"/>
+      <origin xyz="0.039 0 0" rpy="0 0 0"/>
       <!-- Limits: [-38deg.,60deg.] -->
       <limit lower="-0.6632" upper="1.0471" effort="60" velocity="-1"/>
     </joint>
@@ -713,9 +725,7 @@ there are multiple hands then a prefix followed by an "_" is needed.
           <geometry>
             <mesh filename="package://robotiq_s_model_visualization/meshes/s-model_articulated/visual/palm.STL" />
           </geometry>
-          <material name="green">
-            <color rgba="0 1 0 1"/>
-          </material>
+          <material name="gray"/>
         </visual>
         <!-- Simple shape collision -->
         <collision>
@@ -738,6 +748,8 @@ there are multiple hands then a prefix followed by an "_" is needed.
         <mu1>1.1</mu1>
         <mu2>1.1</mu2>
       </gazebo>
+
+      <link name="${prefix}tool0"/>
     <!-- End of link list -->
 
     <!-- Joint list -->
@@ -750,7 +762,7 @@ there are multiple hands then a prefix followed by an "_" is needed.
       <axis xyz="0 1 0"/>
       <origin rpy="0 3.1416 -1.57" xyz="-0.0455 0.0214 0.036"/>
       <!-- Limits: [-17deg.,17deg.] -->
-      <limit lower="-0.2967" upper="0.2967" effort="60" velocity="-1"/>
+      <limit lower="-0.2967" upper="0.2967" effort="0.6" velocity="0.001"/>
     </joint>
 
     <gazebo reference="${prefix}palm_finger_1_joint">
@@ -765,7 +777,7 @@ there are multiple hands then a prefix followed by an "_" is needed.
       <axis xyz="0 1 0"/>
       <origin rpy="0 3.1416 -1.57" xyz="-0.0455 0.0214 -0.036"/>
       <!-- Limits: [-17deg.,17deg.] -->
-      <limit lower="-0.2967" upper="0.2967" effort="60" velocity="-1"/>
+      <limit lower="-0.2967" upper="0.2967" effort="0.6" velocity="0.001"/>
     </joint>
 
     <gazebo reference="${prefix}palm_finger_2_joint">
@@ -779,12 +791,18 @@ there are multiple hands then a prefix followed by an "_" is needed.
       <dynamics damping="1" friction="0" />
       <axis xyz="0 1 0"/>
       <origin rpy="0 0 1.57" xyz="0.0455 0.0214 0"/>
-      <limit lower="0" upper="0" effort="60" velocity="-1"/>
+      <limit lower="0" upper="0" effort="0.6" velocity="0.001"/>
     </joint>
 
     <gazebo reference="${prefix}palm_finger_middle_joint">
       <implicitSpringDamper>1</implicitSpringDamper>
     </gazebo>
+
+    <joint name="${prefix}palm_tool0" type="fixed">
+      <parent link="${prefix}palm"/>
+      <child link="${prefix}tool0"/>
+      <origin xyz="0.0 0.0875 0.0" rpy="0 0 1.5707"/>
+    </joint>
     <!-- end of joint list -->
 
   </xacro:macro>
